@@ -18,6 +18,11 @@ storage, security, tokenizer, RAG, and MCP documents live.
 | `src/al_furqan/documentation/` | Older module-level internal documentation kept with source |
 | `plan/` | PRDs, sprint plans, implementation plans, and roadmap material |
 
+Architecture decisions for the fintech product layer live in [`docs/adr/`](adr/). The
+fintech workstream plans are under [`plan/`](../plan/) and are intentionally additive:
+they shape the generic reasoning engine with product schemas, reviewed rules, evidence,
+and governance rather than replacing the existing engine.
+
 The active architecture baseline is v3.0, with important post-v3 deltas in the
 live code and status docs:
 
