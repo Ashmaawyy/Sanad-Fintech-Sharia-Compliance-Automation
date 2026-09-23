@@ -22,6 +22,14 @@ from al_furqan.fintech.rules import (
     RuleState,
     evaluate_product,
 )
+from al_furqan.fintech.evidence import (
+    ComplianceFinding,
+    EvidenceCitation,
+    EvidenceKind,
+    EvidenceValidation,
+    EvidenceValidator,
+    ReasoningBasis,
+)
 
 __all__ = [
     "Asset",
@@ -42,4 +50,10 @@ __all__ = [
     "RuleResult",
     "RuleState",
     "evaluate_product",
+    "ComplianceFinding",
+    "EvidenceCitation",
+    "EvidenceKind",
+    "EvidenceValidation",
+    "EvidenceValidator",
+    "ReasoningBasis",
 ]
