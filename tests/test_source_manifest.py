@@ -6,6 +6,7 @@ from al_furqan.kb import (
     SourceStatus,
     manifest_entry_for_iifa,
 )
+from al_furqan.kb.source_fetch import fetch_source
 
 
 def test_unreviewed_iifa_source_cannot_publish():
@@ -48,3 +49,30 @@ def test_reviewed_iifa_source_is_publishable_and_round_trips(tmp_path):
 
     assert loaded.publishable("IIFA-262")
     assert loaded.get("IIFA-262").content_hash == "def456"
+
+
+def test_manifest_publication_requires_review_and_reviewer():
+    """A reviewed status without reviewer identity remains blocked."""
+    resolution = IIFAResolution(
+        resolution_id="IIFA-1",
+        title="Example",
+        official_url="https://iifa-aifi.org/en/1.html",
+        source_hash="hash",
+    )
+    entry = manifest_entry_for_iifa(
+        resolution,
+        retrieved_at="2026-09-23T00:00:00Z",
+        status=SourceStatus.REVIEWED,
+    )
+
+    assert not entry.can_publish()
+
+
+def test_fetch_source_rejects_unapproved_hosts():
+    """Downloader rejects source substitution before making a request."""
+    try:
+        fetch_source("https://example.com/source")
+    except ValueError as exc:
+        assert "approved host" in str(exc)
+    else:
+        raise AssertionError("unapproved source host was accepted")

@@ -28,6 +28,7 @@ from al_furqan.kb.source_manifest import (
     SourceStatus,
     manifest_entry_for_iifa,
 )
+from al_furqan.kb.source_fetch import FetchedSource, fetch_source
 from al_furqan.kb.es.retriever import (
     ESUnifiedRetriever as UnifiedRetriever,
 )
@@ -67,4 +68,6 @@ __all__ = [
     "SourceManifestEntry",
     "SourceStatus",
     "manifest_entry_for_iifa",
+    "FetchedSource",
+    "fetch_source",
 ]

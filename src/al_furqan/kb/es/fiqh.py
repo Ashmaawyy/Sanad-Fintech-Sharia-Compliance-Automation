@@ -5,6 +5,7 @@ from __future__ import annotations
 from elasticsearch import Elasticsearch
 
 from al_furqan.kb.iifa import FiqhRuling
+from al_furqan.kb.source_manifest import SourceManifest
 
 
 class FiqhRulingCollection:
@@ -14,14 +15,19 @@ class FiqhRulingCollection:
         self._es = es
         self._index = index
 
-    def save(self, ruling: FiqhRuling) -> str:
+    def save(self, ruling: FiqhRuling, manifest: SourceManifest) -> str:
         """Index only a recognized school attribution."""
         if ruling.school.casefold() not in {"hanafi", "maliki", "shafii", "hanbali"}:
             raise ValueError("Fiqh ruling must identify one of the four supported schools")
+        if not manifest.publishable(ruling.ruling_id):
+            raise ValueError("Fiqh ruling is not approved by the source manifest")
+        document = ruling.to_document()
+        document["manifest_status"] = manifest.get(ruling.ruling_id).status.value
+        document["manifest_reviewer"] = manifest.get(ruling.ruling_id).reviewer
         self._es.index(
             index=self._index,
             id=ruling.ruling_id,
-            document=ruling.to_document(),
+            document=document,
             refresh="wait_for",
         )
         return ruling.ruling_id

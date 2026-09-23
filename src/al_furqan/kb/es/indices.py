@@ -102,6 +102,8 @@ IIFA_RESOLUTIONS_INDEX = {
             "topics": {"type": "keyword"},
             "conflict_terms": {"type": "keyword"},
             "metadata": {"type": "object", "enabled": False},
+            "manifest_status": {"type": "keyword"},
+            "manifest_reviewer": {"type": "keyword"},
         },
     },
 }
@@ -125,6 +127,8 @@ FIQH_RULINGS_INDEX = {
             "verified": {"type": "boolean"},
             "conflict_terms": {"type": "keyword"},
             "metadata": {"type": "object", "enabled": False},
+            "manifest_status": {"type": "keyword"},
+            "manifest_reviewer": {"type": "keyword"},
         },
     },
 }

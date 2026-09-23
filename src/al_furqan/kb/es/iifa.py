@@ -6,6 +6,7 @@ from elasticsearch import Elasticsearch
 
 from al_furqan.kb.es.collections import IIFAResolutionDocument
 from al_furqan.kb.iifa import IIFAResolution
+from al_furqan.kb.source_manifest import SourceManifest
 
 
 class IIFAResolutionCollection:
@@ -15,14 +16,19 @@ class IIFAResolutionCollection:
         self._es = es
         self._index = index
 
-    def save(self, resolution: IIFAResolution) -> str:
+    def save(self, resolution: IIFAResolution, manifest: SourceManifest) -> str:
         """Index a digested resolution by immutable resolution/hash identity."""
         if not resolution.official_url.startswith("https://iifa-aifi.org/"):
             raise ValueError("IIFA resolution must use the official HTTPS domain")
+        if not manifest.publishable(resolution.resolution_id):
+            raise ValueError("IIFA resolution is not approved by the source manifest")
+        document = resolution.to_document()
+        document["manifest_status"] = manifest.get(resolution.resolution_id).status.value
+        document["manifest_reviewer"] = manifest.get(resolution.resolution_id).reviewer
         self._es.index(
             index=self._index,
             id=resolution.resolution_id,
-            document=resolution.to_document(),
+            document=document,
             refresh="wait_for",
         )
         return resolution.resolution_id

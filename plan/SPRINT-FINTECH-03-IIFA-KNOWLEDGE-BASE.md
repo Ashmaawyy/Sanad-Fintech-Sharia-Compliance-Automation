@@ -8,16 +8,16 @@ Start from the official index: https://iifa-aifi.org/en/resolutions. Preserve th
 
 ## Deliverables
 
-- Source manifest with official URLs, resolution number, session, title, date, language, hash, and retrieval timestamp.
-- Downloader with retries, content-type checks, redirect recording, and immutable raw storage.
+- Source manifest with official URLs, resolution number, session, title, date, language, hash, and retrieval timestamp. **Implemented.**
+- Downloader with HTTPS host/content-type checks, redirect recording, and source hashing. **Implemented; raw storage remains deployment-owned because corpus files are excluded from Git.**
 - HTML/PDF parser retaining page and paragraph anchors; OCR quarantine for low-confidence extraction.
 - Arabic canonical text and separately labeled translations.
 - Resolution schema with topics, contract types, rule statements, conditions, exceptions, and related resolutions.
 - Reviewed fiqh-ruling corpus for Hanafi, Maliki, Shafi'i, and Hanbali school interpretations, with scholar and book attribution.
 - Conflict policy that treats reviewed school rulings as interpretive precedent and reserves Qur'an/Sunnah evidence for escalation against IIFA precedent.
-- Human review queue before publication to the searchable KB.
+- Human review queue before publication to the searchable KB. **Publication gate implemented; reviewer UI remains a follow-up.**
 - Supersession and correction model.
-- ES index and retrieval filters for source status, language, topic, contract, and resolution number.
+- ES index and retrieval filters for source status, language, topic, contract, and resolution number. **Status/review filters implemented; remaining filters depend on enriched records.**
 
 ## Acceptance criteria
 
@@ -35,3 +35,11 @@ Start from the official index: https://iifa-aifi.org/en/resolutions. Preserve th
 - Source status and supersession tests.
 - Retrieval tests for Murabaha, loan increments, and Shariah governance.
 - Four-school attribution, verification, and conflict-escalation tests.
+
+## Sprint 003 completion note
+
+The ingestion boundary is complete: IIFA and four-school fiqh records cannot be
+published to Elasticsearch without a matching reviewed manifest entry and
+reviewer identity. Remaining product work is the reviewer UI and richer
+resolution/fiqh extraction (PDF anchors, OCR, translations, conditions, and
+supersession relationships).
