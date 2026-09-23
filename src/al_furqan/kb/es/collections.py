@@ -51,6 +51,24 @@ class Hadith:
     topics: list[str] = field(default_factory=list)
 
 
+@dataclass
+class IIFAResolutionDocument:
+    """An IIFA resolution stored in the precedent index."""
+
+    resolution_id: str
+    title: str
+    official_url: str
+    source_hash: str
+    content: str = ""
+    language: str = "en"
+    session: str = ""
+    published: bool = False
+    reviewed: bool = False
+    topics: list[str] = field(default_factory=list)
+    conflict_terms: list[str] = field(default_factory=list)
+    metadata: dict = field(default_factory=dict)
+
+
 # ---------------------------------------------------------------------------
 # QuranCollection (ES)
 # ---------------------------------------------------------------------------

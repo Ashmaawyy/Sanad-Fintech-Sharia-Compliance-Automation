@@ -22,6 +22,25 @@ class ProductType(str, Enum):
     other = "other"
 
 
+class MurabahaTerms(BaseModel):
+    """Structured facts required by the initial Murabaha rule profile."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    asset_owned_before_sale: bool | None = None
+    asset_possessed_before_sale: bool | None = None
+    cost_disclosed: bool | None = None
+    markup_fixed: bool | None = None
+    price_fixed_at_contract: bool | None = None
+    payment_schedule_fixed: bool | None = None
+    agency_disclosed: bool | None = None
+    collateral_defined: bool | None = None
+    late_payment_amount_to_charity: bool | None = None
+    late_payment_amount_is_income: bool | None = None
+    default_amount_increases_with_time: bool | None = None
+    settlement_terms_defined: bool | None = None
+    settlement_rebate_is_discretionary: bool | None = None
+
+
 class _Entity(BaseModel):
     """Base model with stable serialization settings."""
 
@@ -132,6 +151,7 @@ class FintechProduct(BaseModel):
     name: str = Field(..., min_length=1, max_length=300)
     version: str = Field(default="1", min_length=1, max_length=50)
     product_type: ProductType = ProductType.other
+    murabaha_terms: MurabahaTerms | None = None
     jurisdiction: str | None = Field(default=None, max_length=200)
     currency: str | None = Field(default=None, min_length=3, max_length=10)
     parties: list[Party] = Field(default_factory=list)
@@ -176,6 +196,10 @@ class FintechProduct(BaseModel):
 
         if errors:
             raise ValueError("; ".join(errors))
+        if self.product_type is ProductType.murabaha and self.murabaha_terms is None:
+            # The profile may be incomplete, but the missing fact must remain
+            # visible to the rule engine as insufficient evidence.
+            return self
         return self
 
     def normalized(self) -> "FintechProduct":

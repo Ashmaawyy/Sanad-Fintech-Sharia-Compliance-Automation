@@ -72,7 +72,6 @@ class Verdict:  # pylint: disable=too-many-instance-attributes
     friction_points: list[str]
     gate_scores: list[GateScore]
     origin_gate: GateResult
-    preservation_gate: GateResult
     consequences_short_term: list[str]
     consequences_long_term: list[str]
     revised_reasoning: str
@@ -80,6 +79,7 @@ class Verdict:  # pylint: disable=too-many-instance-attributes
     total_score: int
     passes: int  # how many self-correction passes were run
     timestamp: float = field(default_factory=time.time)
+    preservation_gate: GateResult = GateResult.FAIL
     # 3A.4 — Model metadata
     model_provider: str | None = None
     model_name: str | None = None

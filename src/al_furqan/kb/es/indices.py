@@ -83,6 +83,31 @@ HADITH_INDEX = {
 
 
 # ---------------------------------------------------------------------------
+# Index: furqan_iifa_resolutions
+# ---------------------------------------------------------------------------
+
+IIFA_RESOLUTIONS_INDEX = {
+    "settings": {**ANALYSIS_SETTINGS, "number_of_shards": 1, "number_of_replicas": 0},
+    "mappings": {
+        "properties": {
+            "resolution_id": {"type": "keyword"},
+            "title": _en_text_field(),
+            "official_url": {"type": "keyword"},
+            "source_hash": {"type": "keyword"},
+            "content": {"type": "text", "analyzer": "english"},
+            "language": {"type": "keyword"},
+            "session": {"type": "keyword"},
+            "published": {"type": "boolean"},
+            "reviewed": {"type": "boolean"},
+            "topics": {"type": "keyword"},
+            "conflict_terms": {"type": "keyword"},
+            "metadata": {"type": "object", "enabled": False},
+        },
+    },
+}
+
+
+# ---------------------------------------------------------------------------
 # Index: furqan_graph
 # ---------------------------------------------------------------------------
 
@@ -221,6 +246,7 @@ FEEDBACK_INDEX = {
 INDEX_REGISTRY: dict[str, dict] = {
     "quran": QURAN_INDEX,
     "hadith": HADITH_INDEX,
+    "iifa_resolutions": IIFA_RESOLUTIONS_INDEX,
     "graph": GRAPH_INDEX,
     "lessons": LESSONS_INDEX,
     "verdicts": VERDICTS_INDEX,

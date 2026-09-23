@@ -17,6 +17,7 @@ from al_furqan.kb.es.collections import (
     HadithCollection,
     QuranCollection,
 )
+from al_furqan.kb.es.iifa import IIFAResolutionCollection
 
 # ---------------------------------------------------------------------------
 # Retriever dataclasses (canonical location)
@@ -29,6 +30,7 @@ class Source(str, Enum):
     QURAN = "quran"
     HADITH = "hadith"
     FIQH = "fiqh"
+    IIFA = "iifa"
 
 
 @dataclass
@@ -46,7 +48,9 @@ class RetrievalResult:
 class RetrievalConfig:
     """Configuration for retrieval."""
 
-    sources: list[Source] = field(default_factory=lambda: [Source.QURAN, Source.HADITH])
+    sources: list[Source] = field(
+        default_factory=lambda: [Source.QURAN, Source.HADITH, Source.IIFA]
+    )
     limit_per_source: int = 3
     hadith_grading_filter: str | None = None
 
@@ -81,6 +85,7 @@ class ESUnifiedRetriever:
     ) -> None:
         self._quran = QuranCollection(es, index=quran_index)
         self._hadith = HadithCollection(es, index=hadith_index)
+        self._iifa = IIFAResolutionCollection(es)
 
     def retrieve(
         self,
@@ -144,6 +149,31 @@ class ESUnifiedRetriever:
             except Exception as e:  # pylint: disable=broad-exception-caught
                 logger.error("Hadith search failed: %s", e)
 
+        # Search reviewed IIFA precedent
+        if Source.IIFA in config.sources:
+            sources_searched.append(Source.IIFA)
+            try:
+                resolutions = self._iifa.search(query, limit=config.limit_per_source)
+                for resolution in resolutions:
+                    all_results.append(
+                        RetrievalResult(
+                            source=Source.IIFA,
+                            content_ar="",
+                            content_en=resolution.content,
+                            reference=resolution.resolution_id,
+                            metadata={
+                                "title": resolution.title,
+                                "official_url": resolution.official_url,
+                                "source_hash": resolution.source_hash,
+                                "reviewed": resolution.reviewed,
+                                "published": resolution.published,
+                                "conflict_terms": resolution.conflict_terms,
+                            },
+                        )
+                    )
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                logger.error("IIFA resolution search failed: %s", e)
+
         # Deduplicate by reference
         seen: set[str] = set()
         deduped: list[RetrievalResult] = []
@@ -171,6 +201,7 @@ class ESUnifiedRetriever:
 
         quran = [r for r in results if r.source == Source.QURAN]
         hadith = [r for r in results if r.source == Source.HADITH]
+        iifa = [r for r in results if r.source == Source.IIFA]
 
         if quran:
             lines = ["=== Quran Evidence ==="]
@@ -188,6 +219,15 @@ class ESUnifiedRetriever:
                 lines.append(f"[{r.reference}] ({grading}) — Narrated by {narrator}")
                 lines.append(f"  Arabic: {r.content_ar}")
                 lines.append(f"  English: {r.content_en}")
+            sections.append("\n".join(lines))
+
+        if iifa:
+            lines = ["=== Approved IIFA Resolutions ==="]
+            for r in iifa:
+                title = r.metadata.get("title", "")
+                lines.append(f"[{r.reference}] {title}")
+                lines.append(f"  Official source: {r.metadata.get('official_url', '')}")
+                lines.append(f"  Content: {r.content_en}")
             sections.append("\n".join(lines))
 
         return "\n\n".join(sections)
