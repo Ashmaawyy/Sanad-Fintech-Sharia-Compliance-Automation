@@ -53,10 +53,25 @@ SNAPSHOT_INDICES: dict[str, dict] = {
         "sort": None,
         "id_field": None,
     },
+    "furqan_graph": {
+        "description": "Knowledge graph edge documents",
+        "sort": None,
+        "id_field": None,
+    },
     "furqan_lessons": {
         "description": "Teacher lesson transcripts (2,434 docs)",
         "sort": None,
         "id_field": None,
+    },
+    "furqan_fatwa_qa": {
+        "description": "Financial fatwa Q&A corpus",
+        "sort": None,
+        "id_field": "fatwa_id",
+    },
+    "furqan_fatwa_embeddings": {
+        "description": "Fatwa questions with answer embeddings",
+        "sort": None,
+        "id_field": "record_id",
     },
 }
 

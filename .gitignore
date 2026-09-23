@@ -68,6 +68,7 @@ data_archive/sources/
 data_archive/staging/
 data_archive/fiqh/
 data_archive/derived/
+data_archive/recovered/
 data_archive/backup_for_stored_data/
 data_archive/training/
 data_archive/human_history/

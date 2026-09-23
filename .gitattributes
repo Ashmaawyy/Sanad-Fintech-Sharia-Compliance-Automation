@@ -1,1 +1,2 @@
 *.pdf binary
+data-archive/elasticsearch/furqan_fatwa_embeddings.jsonl filter=lfs diff=lfs merge=lfs -text
