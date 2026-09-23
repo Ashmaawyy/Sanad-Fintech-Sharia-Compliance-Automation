@@ -8,7 +8,11 @@ from al_furqan.kb.es.collections import (
     QuranVerse,
 )
 from al_furqan.kb.es.iifa import IIFAResolutionCollection
+from al_furqan.kb.es.fiqh import FiqhRulingCollection
+from al_furqan.kb.es.fatwa import FatwaQA, FatwaQACollection
 from al_furqan.kb.iifa import (
+    FIQH_SCHOOLS,
+    FiqhRuling,
     IIFAConflictBlocked,
     IIFAResolution,
     VerifiedSource,
@@ -17,6 +21,12 @@ from al_furqan.kb.iifa import (
     discover_resolution_links,
     enforce_iifa_precedent,
     ingest_official_resolutions,
+)
+from al_furqan.kb.source_manifest import (
+    SourceManifest,
+    SourceManifestEntry,
+    SourceStatus,
+    manifest_entry_for_iifa,
 )
 from al_furqan.kb.es.retriever import (
     ESUnifiedRetriever as UnifiedRetriever,
@@ -35,6 +45,11 @@ __all__ = [
     "IIFAConflictBlocked",
     "IIFAResolutionCollection",
     "IIFAResolutionDocument",
+    "FIQH_SCHOOLS",
+    "FiqhRuling",
+    "FiqhRulingCollection",
+    "FatwaQA",
+    "FatwaQACollection",
     "KnowledgeContext",
     "QuranCollection",
     "QuranVerse",
@@ -48,4 +63,8 @@ __all__ = [
     "discover_resolution_links",
     "enforce_iifa_precedent",
     "ingest_official_resolutions",
+    "SourceManifest",
+    "SourceManifestEntry",
+    "SourceStatus",
+    "manifest_entry_for_iifa",
 ]

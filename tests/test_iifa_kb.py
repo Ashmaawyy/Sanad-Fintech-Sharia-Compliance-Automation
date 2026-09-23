@@ -1,6 +1,7 @@
 """Tests for official IIFA digestion and precedent conflict policy."""
 
 from al_furqan.kb.iifa import (
+    FiqhRuling,
     IIFAConflictBlocked,
     IIFA_RESOLUTIONS_URL,
     IIFAResolution,
@@ -135,3 +136,43 @@ def test_verified_quran_or_sunnah_evidence_escalates_conflict():
 
     assert result.status == "escalated_conflict"
     assert result.evidence == (source,)
+
+
+def test_reviewed_four_school_ruling_raises_conflict():
+    """Approved school interpretation is part of the precedent check."""
+    ruling = FiqhRuling(
+        ruling_id="FIQH-HANAFI-001",
+        school="hanafi",
+        scholar="Abu Hanifa school authority",
+        title="Deferred debt increment",
+        source_reference="Al-Hidayah, Book of Sale",
+        text="An increment on a debt due solely to time is not permitted.",
+        reviewed=True,
+        verified=True,
+        conflict_terms=("debt increment",),
+    )
+
+    result = check_against_iifa("This product permits a debt increment", [], fiqh_rulings=[ruling])
+
+    assert result.status == "blocked_conflict"
+    assert result.fiqh_conflicts == (ruling,)
+
+
+def test_unverified_fiqh_ruling_cannot_raise_conflict():
+    """School labels alone are not enough to enter the trusted corpus."""
+    ruling = FiqhRuling(
+        ruling_id="FIQH-MALIKI-001",
+        school="maliki",
+        scholar="Unverified attribution",
+        title="Unreviewed ruling",
+        source_reference="unverified manuscript",
+        text="Text",
+        reviewed=False,
+        verified=False,
+        conflict_terms=("debt increment",),
+    )
+
+    result = check_against_iifa("This product permits a debt increment", [], fiqh_rulings=[ruling])
+
+    assert result.status == "clear"
+    assert not result.fiqh_conflicts

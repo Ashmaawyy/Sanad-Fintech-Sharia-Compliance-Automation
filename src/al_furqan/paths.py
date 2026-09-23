@@ -50,6 +50,19 @@ DATA_REVIEW: Path = DATA_ARCHIVE / "review"
 DATA_FEEDBACK: Path = DATA_ARCHIVE / "feedback"
 DATA_AUDIT: Path = DATA_ARCHIVE / "audit"
 DATA_TAFSIR_FEEDBACK: Path = DATA_ARCHIVE / "tafsir_feedback"
+DATA_SOURCES: Path = DATA_ARCHIVE / "sources"
+DATA_FATWA_SOURCES: Path = DATA_SOURCES / "fatwas"
+DATA_HUGGINGFACE_SOURCES: Path = DATA_SOURCES / "huggingface"
+DATA_STAGING: Path = DATA_ARCHIVE / "staging"
+DATA_FINANCIAL_FATWAS: Path = DATA_ARCHIVE / "fiqh" / "financial_qa"
+DATA_DERIVED_FIQH: Path = DATA_ARCHIVE / "derived" / "fiqh"
+
+FINANCIAL_FATWAS_CSV: Path = DATA_FINANCIAL_FATWAS / "financial_fatwas.csv"
+FULL_FATWA_SOURCE_CSV: Path = DATA_FATWA_SOURCES / "islamic_qa_full.csv"
+FULL_FATWA_EMBEDDINGS: Path = DATA_FATWA_SOURCES / "islamic_qa_embeddings.pt"
+FINANCIAL_FATWA_ROW_INDICES: Path = (
+    DATA_DERIVED_FIQH / "financial_fatwas_source_row_indices.txt"
+)
 
 # ---------------------------------------------------------------------------
 # Training pipeline paths

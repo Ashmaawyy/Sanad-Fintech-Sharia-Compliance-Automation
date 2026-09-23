@@ -108,6 +108,74 @@ IIFA_RESOLUTIONS_INDEX = {
 
 
 # ---------------------------------------------------------------------------
+# Index: furqan_fiqh_rulings
+# ---------------------------------------------------------------------------
+
+FIQH_RULINGS_INDEX = {
+    "settings": {**ANALYSIS_SETTINGS, "number_of_shards": 1, "number_of_replicas": 0},
+    "mappings": {
+        "properties": {
+            "ruling_id": {"type": "keyword"},
+            "school": {"type": "keyword"},
+            "scholar": {"type": "keyword"},
+            "title": _en_text_field(),
+            "source_reference": {"type": "keyword"},
+            "text": {"type": "text", "analyzer": "arabic_furqan"},
+            "reviewed": {"type": "boolean"},
+            "verified": {"type": "boolean"},
+            "conflict_terms": {"type": "keyword"},
+            "metadata": {"type": "object", "enabled": False},
+        },
+    },
+}
+
+
+# ---------------------------------------------------------------------------
+# Index: furqan_fatwa_qa
+# ---------------------------------------------------------------------------
+
+FATWA_QA_INDEX = {
+    "settings": {**ANALYSIS_SETTINGS, "number_of_shards": 1, "number_of_replicas": 0},
+    "mappings": {
+        "properties": {
+            "fatwa_id": {"type": "keyword"},
+            "question": {"type": "text", "analyzer": "arabic_furqan"},
+            "answer": {"type": "text", "analyzer": "arabic_furqan"},
+            "url": {"type": "keyword"},
+            "source_dataset": {"type": "keyword"},
+            "source_row": {"type": "integer"},
+            "topics": {"type": "keyword"},
+        },
+    },
+}
+
+
+# ---------------------------------------------------------------------------
+# Index: furqan_fatwa_embeddings
+# ---------------------------------------------------------------------------
+
+FATWA_EMBEDDINGS_INDEX = {
+    "settings": {**ANALYSIS_SETTINGS, "number_of_shards": 1, "number_of_replicas": 0},
+    "mappings": {
+        "properties": {
+            "record_id": {"type": "keyword"},
+            "question": {"type": "text", "analyzer": "arabic_furqan"},
+            "metadata": {"type": "object", "enabled": False},
+            "source_archive": {"type": "keyword"},
+            "source_shard": {"type": "keyword"},
+            "embedding_model": {"type": "keyword"},
+            "answer_embedding": {
+                "type": "dense_vector",
+                "dims": 768,
+                "index": True,
+                "similarity": "cosine",
+            },
+        },
+    },
+}
+
+
+# ---------------------------------------------------------------------------
 # Index: furqan_graph
 # ---------------------------------------------------------------------------
 
@@ -247,6 +315,9 @@ INDEX_REGISTRY: dict[str, dict] = {
     "quran": QURAN_INDEX,
     "hadith": HADITH_INDEX,
     "iifa_resolutions": IIFA_RESOLUTIONS_INDEX,
+    "fiqh_rulings": FIQH_RULINGS_INDEX,
+    "fatwa_qa": FATWA_QA_INDEX,
+    "fatwa_embeddings": FATWA_EMBEDDINGS_INDEX,
     "graph": GRAPH_INDEX,
     "lessons": LESSONS_INDEX,
     "verdicts": VERDICTS_INDEX,

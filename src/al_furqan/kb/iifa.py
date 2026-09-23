@@ -21,6 +21,9 @@ IIFA_RESOLUTIONS_URL = "https://iifa-aifi.org/en/resolutions"
 IIFA_DOMAIN = "iifa-aifi.org"
 
 
+FIQH_SCHOOLS = ("hanafi", "maliki", "shafii", "hanbali")
+
+
 @dataclass(frozen=True)
 class VerifiedSource:
     """A verified primary source offered to justify a board conflict."""
@@ -34,6 +37,54 @@ class VerifiedSource:
     def is_eligible(self) -> bool:
         """Only verified Qur'an or Sunnah evidence can open a conflict review."""
         return self.verified and self.source_type.lower() in {"quran", "sunnah"}
+
+
+@dataclass(frozen=True)
+class FiqhRuling:
+    """A reviewed ruling attributed to one of the four Sunni schools.
+
+    These records represent established interpretive traditions for review;
+    they are not treated as interchangeable with revealed text or as proof
+    that all schools agree. School attribution and reviewer provenance are
+    mandatory before a record can constrain generated output.
+    """
+
+    ruling_id: str
+    school: str
+    scholar: str
+    title: str
+    source_reference: str
+    text: str
+    reviewed: bool = False
+    verified: bool = False
+    conflict_terms: tuple[str, ...] = ()
+    metadata: dict = field(default_factory=dict)
+
+    @property
+    def eligible_precedent(self) -> bool:
+        """Only reviewed, verified, four-school records enter conflict checks."""
+        return (
+            self.school.casefold() in FIQH_SCHOOLS
+            and bool(self.scholar.strip())
+            and bool(self.source_reference.strip())
+            and self.reviewed
+            and self.verified
+        )
+
+    def to_document(self) -> dict:
+        """Return an Elasticsearch-ready fiqh ruling document."""
+        return {
+            "ruling_id": self.ruling_id,
+            "school": self.school,
+            "scholar": self.scholar,
+            "title": self.title,
+            "source_reference": self.source_reference,
+            "text": self.text,
+            "reviewed": self.reviewed,
+            "verified": self.verified,
+            "conflict_terms": list(self.conflict_terms),
+            "metadata": self.metadata,
+        }
 
 
 @dataclass(frozen=True)
@@ -211,6 +262,7 @@ class ConflictCheck:
 
     status: str  # clear, blocked_conflict, escalated_conflict, no_precedent
     conflicts: tuple[IIFAResolution, ...] = ()
+    fiqh_conflicts: tuple[FiqhRuling, ...] = ()
     evidence: tuple[VerifiedSource, ...] = ()
     message: str = ""
 
@@ -219,6 +271,7 @@ def check_against_iifa(
     proposal: str,
     rulings: Iterable[IIFAResolution],
     verified_sources: Iterable[VerifiedSource] = (),
+    fiqh_rulings: Iterable[FiqhRuling] = (),
 ) -> ConflictCheck:
     """Enforce the IIFA precedent policy for a verdict or proposal.
 
@@ -229,6 +282,7 @@ def check_against_iifa(
     """
     text = proposal.casefold()
     ruling_list = tuple(rulings)
+    fiqh_list = tuple(fiqh_rulings)
     conflicts = tuple(
         ruling
         for ruling in ruling_list
@@ -236,21 +290,33 @@ def check_against_iifa(
         and ruling.conflict_terms
         and any(term.casefold() in text for term in ruling.conflict_terms)
     )
-    if not conflicts:
-        return ConflictCheck("clear" if ruling_list else "no_precedent", message="No approved IIFA conflict matched.")
+    fiqh_conflicts = tuple(
+        ruling
+        for ruling in fiqh_list
+        if ruling.eligible_precedent
+        and ruling.conflict_terms
+        and any(term.casefold() in text for term in ruling.conflict_terms)
+    )
+    if not conflicts and not fiqh_conflicts:
+        return ConflictCheck(
+            "clear" if ruling_list or fiqh_list else "no_precedent",
+            message="No approved IIFA or four-school fiqh conflict matched.",
+        )
     evidence = tuple(source for source in verified_sources if source.is_eligible)
     if evidence:
         return ConflictCheck(
             "escalated_conflict",
             conflicts,
+            fiqh_conflicts,
             evidence,
-            "Output conflicts with approved IIFA precedent; verified primary-source evidence requires scholarly review.",
+            "Output conflicts with approved IIFA or four-school fiqh precedent; verified primary-source evidence requires scholarly review.",
         )
     return ConflictCheck(
         "blocked_conflict",
         conflicts,
+        fiqh_conflicts,
         (),
-        "Output conflicts with approved IIFA precedent and lacks verified Qur'an/Sunnah evidence; release is blocked.",
+        "Output conflicts with approved IIFA or four-school fiqh precedent and lacks verified Qur'an/Sunnah evidence; release is blocked.",
     )
 
 
@@ -258,13 +324,14 @@ def enforce_iifa_precedent(
     proposal: str,
     rulings: Iterable[IIFAResolution],
     verified_sources: Iterable[VerifiedSource] = (),
+    fiqh_rulings: Iterable[FiqhRuling] = (),
 ) -> ConflictCheck:
     """Check generated output and raise on an unsupported board conflict.
 
     Callers may release ``clear`` results, route ``escalated_conflict`` to a
     qualified scholar, and must not release ``blocked_conflict`` results.
     """
-    result = check_against_iifa(proposal, rulings, verified_sources)
+    result = check_against_iifa(proposal, rulings, verified_sources, fiqh_rulings)
     if result.status == "blocked_conflict":
         raise IIFAConflictBlocked(result.message)
     return result

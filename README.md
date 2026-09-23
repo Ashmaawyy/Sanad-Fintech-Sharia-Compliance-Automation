@@ -54,13 +54,14 @@ Reasoning engine
 
 Knowledge and retrieval
   ES-backed Quran, Hadith, graph, lessons, verdicts, and feedback indices
+  ES-backed IIFA resolutions, four-school fiqh rulings, and financial fatwa Q&A
   Arabic analyzer defined in al_furqan.kb.es.analyzers
   Tafsir KB tools exposed to the guided RAG pipeline
   Multi-level Quran tokenizer: Word, Root, Semantic, Logic, Transition
   Ingestion and review path for proposed graph edges
 
 Data and learning
-  data_archive/ stores archived/static source material and generated JSONL
+  data_archive/ separates immutable sources, active fiqh corpora, staging data, and derived artifacts
   training/pipeline builds verse-centric graph and history training exports
   Runtime verdict/feedback persistence lives in Elasticsearch
   furqan-memory remains local-only SQLite + ChromaDB by design
@@ -112,6 +113,10 @@ The registry in `src/al_furqan/kb/es/indices.py` defines these runtime indices:
 | `lessons` | `furqan_lessons` | Enriched lesson chapters and linked evidence |
 | `verdicts` | `furqan_verdicts` | Evaluation results and precedent retrieval |
 | `feedback` | `furqan_feedback` | Human feedback and corrections |
+| `iifa_resolutions` | `furqan_iifa_resolutions` | Reviewed IIFA resolutions |
+| `fiqh_rulings` | `furqan_fiqh_rulings` | Reviewed four-school fiqh rulings |
+| `fatwa_qa` | `furqan_fatwa_qa` | Filtered financial fatwa Q&A evidence |
+| `fatwa_embeddings` | `furqan_fatwa_embeddings` | HF fatwa questions and 768-dim answer embeddings |
 
 Training/staging indices are also defined in code:
 
@@ -147,11 +152,38 @@ al-furqan/
   tests/                 Core package tests
   furqan-raas/           MCP reasoning server wrapper
   furqan-memory/         Local MCP memory server
-  data_archive/          Archived corpora and generated training JSONL
+  data_archive/          Sources, active fiqh corpora, staging data, derived outputs
   training/              Graph/history extraction and staging pipelines
   scripts/               Benchmarks, evals, fetchers, KB extraction, Neo4j, rendering
   docs/                  Active and legacy documentation
   plan/                  PRDs, sprint plans, and roadmap documents
+```
+
+### Data hierarchy
+
+```text
+data_archive/
+  sources/                Immutable external/source snapshots
+    fatwas/               Full Q&A CSV and full-corpus embeddings
+    huggingface/          Original Hugging Face shard archives
+  fiqh/financial_qa/     Active 7,162-row financial fatwa corpus
+  staging/huggingface/   Extracted HF shards awaiting validated import
+  derived/fiqh/           Row maps and other reproducible derived artifacts
+  backup_for_stored_data/ Existing Quran, Hadith, Tafsir, and lesson snapshots
+  training/               Generated JSONL training/staging outputs
+scripts/kb/               Data filters and KB ingestion utilities
+```
+
+The complete `islamqa_emb_0` staging shard contains 9,994 validated records.
+The supplied `islamqa_emb_1.tar.xz` source archive is truncated and is retained
+without partial extraction until a complete copy is available.
+
+The active financial fatwa corpus is indexed with:
+
+```bash
+python -m al_furqan.kb.es.setup_indices --index fatwa_qa
+python -m al_furqan.kb.es.ingest_fatwa_qa --dry-run
+python -m al_furqan.kb.es.ingest_fatwa_qa
 ```
 
 Current tree snapshot from this checkout:

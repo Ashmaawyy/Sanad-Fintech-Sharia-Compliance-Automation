@@ -18,6 +18,8 @@ from al_furqan.kb.es.collections import (
     QuranCollection,
 )
 from al_furqan.kb.es.iifa import IIFAResolutionCollection
+from al_furqan.kb.es.fiqh import FiqhRulingCollection
+from al_furqan.kb.es.fatwa import FatwaQACollection
 
 # ---------------------------------------------------------------------------
 # Retriever dataclasses (canonical location)
@@ -31,6 +33,7 @@ class Source(str, Enum):
     HADITH = "hadith"
     FIQH = "fiqh"
     IIFA = "iifa"
+    FATWA = "fatwa"
 
 
 @dataclass
@@ -49,7 +52,13 @@ class RetrievalConfig:
     """Configuration for retrieval."""
 
     sources: list[Source] = field(
-        default_factory=lambda: [Source.QURAN, Source.HADITH, Source.IIFA]
+        default_factory=lambda: [
+            Source.QURAN,
+            Source.HADITH,
+            Source.FIQH,
+            Source.IIFA,
+            Source.FATWA,
+        ]
     )
     limit_per_source: int = 3
     hadith_grading_filter: str | None = None
@@ -86,6 +95,8 @@ class ESUnifiedRetriever:
         self._quran = QuranCollection(es, index=quran_index)
         self._hadith = HadithCollection(es, index=hadith_index)
         self._iifa = IIFAResolutionCollection(es)
+        self._fiqh = FiqhRulingCollection(es)
+        self._fatwa = FatwaQACollection(es)
 
     def retrieve(
         self,
@@ -150,6 +161,54 @@ class ESUnifiedRetriever:
                 logger.error("Hadith search failed: %s", e)
 
         # Search reviewed IIFA precedent
+        if Source.FATWA in config.sources:
+            sources_searched.append(Source.FATWA)
+            try:
+                fatwas = self._fatwa.search(query, limit=config.limit_per_source)
+                for fatwa in fatwas:
+                    all_results.append(
+                        RetrievalResult(
+                            source=Source.FATWA,
+                            content_ar=fatwa.answer,
+                            content_en=fatwa.answer,
+                            reference=fatwa.fatwa_id,
+                            metadata={
+                                "question": fatwa.question,
+                                "url": fatwa.url,
+                                "source_row": fatwa.source_row,
+                                "source_dataset": fatwa.source_dataset,
+                            },
+                        )
+                    )
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                logger.error("Financial fatwa search failed: %s", e)
+
+        # Search reviewed IIFA precedent
+        if Source.FIQH in config.sources:
+            sources_searched.append(Source.FIQH)
+            try:
+                rulings = self._fiqh.search(query, limit=config.limit_per_source)
+                for ruling in rulings:
+                    all_results.append(
+                        RetrievalResult(
+                            source=Source.FIQH,
+                            content_ar=ruling.text,
+                            content_en=ruling.text,
+                            reference=ruling.ruling_id,
+                            metadata={
+                                "school": ruling.school,
+                                "scholar": ruling.scholar,
+                                "source_reference": ruling.source_reference,
+                                "reviewed": ruling.reviewed,
+                                "verified": ruling.verified,
+                                "conflict_terms": ruling.conflict_terms,
+                            },
+                        )
+                    )
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                logger.error("Fiqh ruling search failed: %s", e)
+
+        # Search reviewed IIFA precedent
         if Source.IIFA in config.sources:
             sources_searched.append(Source.IIFA)
             try:
@@ -202,6 +261,8 @@ class ESUnifiedRetriever:
         quran = [r for r in results if r.source == Source.QURAN]
         hadith = [r for r in results if r.source == Source.HADITH]
         iifa = [r for r in results if r.source == Source.IIFA]
+        fiqh = [r for r in results if r.source == Source.FIQH]
+        fatwas = [r for r in results if r.source == Source.FATWA]
 
         if quran:
             lines = ["=== Quran Evidence ==="]
@@ -228,6 +289,25 @@ class ESUnifiedRetriever:
                 lines.append(f"[{r.reference}] {title}")
                 lines.append(f"  Official source: {r.metadata.get('official_url', '')}")
                 lines.append(f"  Content: {r.content_en}")
+            sections.append("\n".join(lines))
+
+        if fiqh:
+            lines = ["=== Reviewed Four-School Fiqh Rulings ==="]
+            for r in fiqh:
+                lines.append(
+                    f"[{r.reference}] {r.metadata.get('school', '')} — "
+                    f"{r.metadata.get('scholar', '')}"
+                )
+                lines.append(f"  Reference: {r.metadata.get('source_reference', '')}")
+                lines.append(f"  Ruling: {r.content_ar}")
+            sections.append("\n".join(lines))
+
+        if fatwas:
+            lines = ["=== Financial Fatwa Q&A Evidence ==="]
+            for r in fatwas:
+                lines.append(f"[{r.reference}] {r.metadata.get('question', '')}")
+                lines.append(f"  Source: {r.metadata.get('url', '')}")
+                lines.append(f"  Answer: {r.content_en}")
             sections.append("\n".join(lines))
 
         return "\n\n".join(sections)

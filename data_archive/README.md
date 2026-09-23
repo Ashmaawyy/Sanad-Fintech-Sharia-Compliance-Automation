@@ -31,6 +31,47 @@ generator and rebuild the output.
 | `training/` | Generated JSONL used by learning/testing and ES staging |
 | `README.md` | This file |
 
+## Financial Fatwa Corpus
+
+`fiqh/financial_qa/financial_fatwas.csv` is the active financial-inquiry subset
+of the 51,470-row Q&A fatwa source. It currently contains 7,162 rows selected
+by the reproducible classifier in `scripts/kb/filter_financial_fatwas.py`.
+The original source and its full-corpus embeddings are preserved under
+`sources/fatwas/`; retained source row numbers are in `derived/fiqh/` so aligned
+embedding data can be sliced when the PyTorch dependency is available.
+
+Hugging Face shard archives are under `sources/huggingface/`; extracted shard
+files are under `staging/huggingface/` and are not treated as published KB
+records until a schema-aware importer validates them. The complete extracted
+`islamqa_emb_0` shard currently validates 9,994 records. The supplied
+`islamqa_emb_1.tar.xz` archive is truncated and remains quarantined as a source
+archive until a complete copy is available.
+
+Re-run the preview with:
+
+```bash
+python scripts/kb/filter_financial_fatwas.py
+```
+
+Index the active financial corpus into Elasticsearch:
+
+```bash
+python -m al_furqan.kb.es.setup_indices --index fatwa_qa
+python -m al_furqan.kb.es.ingest_fatwa_qa --dry-run
+python -m al_furqan.kb.es.ingest_fatwa_qa
+```
+
+Validate and index the complete Hugging Face shard separately:
+
+```bash
+python -m al-furqan.kb.es.setup_indices --index fatwa_embeddings
+python -m al-furqan.kb.es.ingest_hf_fatwa_embeddings --dry-run
+python -m al-furqan.kb.es.ingest_hf_fatwa_embeddings
+```
+
+The filter matches finance terms in the question field, applies Arabic
+normalization only for classification, and leaves stored Arabic text unchanged.
+
 Important path note: code-level constants in `src/al_furqan/paths.py` define
 normalized archive anchors such as `data_archive/quran`,
 `data_archive/hadith`, `data_archive/lessons`, and `data_archive/training`.

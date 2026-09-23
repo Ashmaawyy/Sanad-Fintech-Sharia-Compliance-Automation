@@ -13,6 +13,8 @@ Start from the official index: https://iifa-aifi.org/en/resolutions. Preserve th
 - HTML/PDF parser retaining page and paragraph anchors; OCR quarantine for low-confidence extraction.
 - Arabic canonical text and separately labeled translations.
 - Resolution schema with topics, contract types, rule statements, conditions, exceptions, and related resolutions.
+- Reviewed fiqh-ruling corpus for Hanafi, Maliki, Shafi'i, and Hanbali school interpretations, with scholar and book attribution.
+- Conflict policy that treats reviewed school rulings as interpretive precedent and reserves Qur'an/Sunnah evidence for escalation against IIFA precedent.
 - Human review queue before publication to the searchable KB.
 - Supersession and correction model.
 - ES index and retrieval filters for source status, language, topic, contract, and resolution number.
@@ -32,3 +34,4 @@ Start from the official index: https://iifa-aifi.org/en/resolutions. Preserve th
 - Anchor preservation tests.
 - Source status and supersession tests.
 - Retrieval tests for Murabaha, loan increments, and Shariah governance.
+- Four-school attribution, verification, and conflict-escalation tests.
