@@ -3,7 +3,9 @@
 from datetime import datetime  # pylint: disable=wrong-import-order
 from enum import Enum  # pylint: disable=wrong-import-order
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
+
+from al_furqan.fintech.models import FintechProduct
 
 # ──────────────────────────────────────────────
 # Enums
@@ -75,6 +77,13 @@ class EvaluateRequest(BaseModel):  # pylint: disable=too-few-public-methods
         None,
         description="Additional context to guide the evaluation",
     )
+    product: FintechProduct | None = Field(
+        None,
+        description=(
+            "Optional structured fintech product facts. The product is normalized "
+            "at the review boundary and does not replace human Shariah review."
+        ),
+    )
     options: dict | None = Field(
         default_factory=lambda: {
             "max_correction_passes": 5,
@@ -83,6 +92,13 @@ class EvaluateRequest(BaseModel):  # pylint: disable=too-few-public-methods
         },
         description="Evaluation options: max_correction_passes, include_precedent, auto_approve_threshold",  # pylint: disable=line-too-long
     )
+
+    @model_validator(mode="after")
+    def normalize_product(self) -> "EvaluateRequest":
+        """Normalize product facts before they enter evaluation or storage."""
+        if self.product is not None:
+            self.product = self.product.normalized()
+        return self
 
 
 class CriterionTestRequest(BaseModel):  # pylint: disable=too-few-public-methods
