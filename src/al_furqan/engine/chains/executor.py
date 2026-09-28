@@ -82,7 +82,7 @@ class ChainExecutor:
     def _build_prompt(chain_question: str, accumulated_context: list[str]) -> str:
         """Build a prompt for the LLM with accumulated context."""
         parts = [
-            "You are a fact extraction engine. Answer the following question "
+            "You are a fact extraction engine. Answer the following question ",
             "based ONLY on the provided context. Extract facts, not opinions.",
             "",
         ]
