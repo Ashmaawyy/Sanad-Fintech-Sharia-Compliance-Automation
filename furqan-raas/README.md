@@ -1,6 +1,9 @@
 # Furqan RaaS — Reasoning-as-a-Skill
 
-MCP-compatible reasoning server that exposes the Al-Furqan axiom-anchored evaluation engine via JSON-RPC 2.0 over stdio.
+MCP-compatible reasoning server that exposes the Al-Furqan evaluation engine and
+Sanad review workflow via JSON-RPC 2.0 over stdio. This package is part of the
+broader Sanad platform and exposes the reasoning layer used for grounded
+evaluation, evidence retrieval, and structured review workflows.
 
 ## Quick Start
 

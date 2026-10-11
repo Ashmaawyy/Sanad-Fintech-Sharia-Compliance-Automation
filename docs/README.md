@@ -1,9 +1,10 @@
-# Al-Furqan Documentation
+# Sanad Documentation
 
-This directory is the documentation map for the current Al-Furqan architecture.
-Use it together with the root [README](../README.md): the root README is the
-quick operational overview; this file tells you where deeper architecture,
-storage, security, tokenizer, RAG, and MCP documents live.
+This directory is the documentation map for the current Sanad fintech
+Shariah-compliance review platform. The underlying reasoning engine is
+Al-Furqan. Use it together with the root [README](../README.md): the root
+README gives the product and operating view, while this file explains where the
+deeper architecture, storage, security, tokenizer, RAG, and MCP references live.
 
 ---
 
@@ -19,9 +20,9 @@ storage, security, tokenizer, RAG, and MCP documents live.
 | `plan/` | PRDs, sprint plans, implementation plans, and roadmap material |
 
 Architecture decisions for the fintech product layer live in [`docs/adr/`](adr/). The
-fintech workstream plans are under [`plan/`](../plan/) and are intentionally additive:
-they shape the generic reasoning engine with product schemas, reviewed rules, evidence,
-and governance rather than replacing the existing engine.
+fintech workstream plans under [`plan/`](../plan/) are not a sidecar to a generic
+engine alone; they define the product-specific review layer for contract analysis,
+Islamic-finance rule checks, evidence citations, and governed human decision-making.
 
 The active architecture baseline is v3.0, with important post-v3 deltas in the
 live code and status docs:

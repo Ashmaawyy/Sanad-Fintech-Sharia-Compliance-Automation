@@ -1,263 +1,219 @@
-# Al-Furqan - The Criterion
+# Sanad
 
-> Axiom-anchored neuro-symbolic reasoning engine for evaluating claims,
-> systems, and frameworks against immutable logical axioms grounded in verified
-> Islamic scholarship.
+Open-source fintech Shariah-compliance AI reviewer.
 
-Al-Furqan is not a general chatbot. It is a reasoning system whose job is to
-separate judgment from generation:
+Sanad is the product name. Al-Furqan is the underlying reasoning engine that powers source-grounded evaluation, evidence retrieval, and review workflows. Sanad is designed to help teams review fintech products, contracts, transaction structures, and policies through a disciplined Shariah workflow: extract facts, retrieve authoritative sources, apply rule logic, surface evidence, and require human oversight before a conclusion is treated as a compliance decision.
+
+This repository is not a generic chatbot and it is not positioned as an autonomous Shariah certification engine. The product goal is a transparent review assistant for Islamic-finance compliance work: grounded analysis, auditability, and controlled human review.
+
+---
+
+## Product strategy
+
+The current strategy is to combine:
+
+- a general reasoning engine for source-grounded evaluation,
+- a fintech review layer for contracts, products, and product facts,
+- a rule/evidence model for Islamic-finance findings,
+- a human review flow that keeps final approval with qualified Shariah governance.
+
+The high-level principle is simple:
 
 ```text
-The code routes and scores.
-The LLM extracts, reasons, and explains.
-Z3 checks formal consistency.
-Elasticsearch retrieves verified knowledge and stores verdicts.
-Humans review and correct.
+The model extracts and explains.
+The rule engine evaluates known product facts.
+The KB retrieves source-backed evidence.
+The reviewer validates the finding and decides the final compliance outcome.
 ```
 
-The canonical Criterion flow remains four sequential gates:
-
-1. Source-Integrity
-2. Structural-Consistency
-3. Mediation-Zeroing
-4. Origin-Aware
-
-The current implementation also carries an `Origin-Preservation` verdict field
-as a preservation extension in the engine, API schemas, and ES verdict store.
+A generated result is treated as a review artifact, not as a final Shariah certificate.
 
 ---
 
-## Current Architecture
+## What this repository contains
+
+At the code level, the project currently combines the Al-Furqan reasoning engine with the Sanad product layer.
+
+### Core engine
+
+The underlying reasoning engine is Al-Furqan, and the product surface is Sanad. The core package under `src/al_furqan/` includes:
+
+- `api/` — FastAPI app, routes, schemas, orchestration
+- `auth/` — API keys, RBAC, rate limiting, security middleware
+- `engine/` — axioms, gates, chains, symbolics, review workflow
+- `kb/` — Elasticsearch-backed knowledge retrieval, indexing, and source integrations
+- `fintech/` — product models, rule evaluation, evidence findings, review artifacts
+- `store/` — verdict and feedback persistence
+- `review/` — human review helpers and review workflows
+- `tokenizer/` — Quran/tokenization utilities
+- `providers/` — LLM/provider abstraction
+
+### Fintech review layer
+
+The repo includes a dedicated fintech model layer for reviewable product facts and compliance findings:
+
+- `src/al_furqan/fintech/models.py` defines normalized product, contract, and transaction structures.
+- `src/al_furqan/fintech/rules.py` contains rule-based evaluation of product structures.
+- `src/al_furqan/fintech/evidence.py` defines evidence citations and compliance findings.
+- `src/al_furqan/fintech/__init__.py` exports the review-facing model surface.
+
+This is the clearest signal of the current product direction: Sanad is the product experience built on top of the Al-Furqan reasoning engine for Shariah-compliance analysis of fintech products.
+
+---
+
+## Architecture in practice
+
+The codebase follows a layered model:
 
 ```text
-Client surfaces
-  CLI: al-furqan
-  REST: FastAPI under /api/v1
-  MCP: furqan-raas reasoning server
-  MCP: furqan-memory local memory server
+API + auth + review surfaces
+    -> orchestrates request handling and human review workflow
+    -> calls engine + fintech rule logic + KB retrieval
+    -> stores results and evidence
 
-Security envelope
-  API keys, role-aware auth, rate limiting, request limits, security headers
-  PromptGuard, IntegrityVerifier, OutputValidator, AdapterSandbox, AuditLogger
+Engine layer
+    -> axioms, gates, reasoning pipeline, symbolic verification
+    -> outputs structured verdicts and explanations
 
-Orchestration
-  FastAPI routers and Orchestrator connect engine, KB, stores, Z3, and LLMs.
-  Cross-layer access should happen here, not inside the engine or KB.
+Fintech layer
+    -> product normalization, contract facts, rule checks
+    -> evidence-grounded findings and review status
 
-Reasoning engine
-  Immutable axioms and SHA-256 integrity checks
-  Intent detection, Scan -> Mirror -> Verdict -> Self-Correction
-  Dual-perspective evaluation for embedded assumptions
-  Independent gate modules, guided chains, deterministic scoring
-  Symbolic verifier and predicate extraction over Z3
-  Tafsir RAG planner, templates, feedback loop, and tool execution
+Knowledge layer
+    -> Elasticsearch-backed Quran, hadith, fiqh, IIFA, and fatwa evidence
+    -> retrieval context for grounded reasoning
 
-Knowledge and retrieval
-  ES-backed Quran, Hadith, graph, lessons, verdicts, and feedback indices
-  ES-backed IIFA resolutions, four-school fiqh rulings, and financial fatwa Q&A
-  Arabic analyzer defined in al_furqan.kb.es.analyzers
-  Tafsir KB tools exposed to the guided RAG pipeline
-  Multi-level Quran tokenizer: Word, Root, Semantic, Logic, Transition
-  Ingestion and review path for proposed graph edges
-
-Data and learning
-  data_archive/ separates immutable sources, active fiqh corpora, staging data, and derived artifacts
-  training/pipeline builds verse-centric graph and history training exports
-  Runtime verdict/feedback persistence lives in Elasticsearch
-  furqan-memory remains local-only SQLite + ChromaDB by design
+Storage layer
+    -> verdicts, feedback, audit records, and review metadata
 ```
 
-Only orchestration should know about every layer. The engine receives context
-as text and returns verdict objects; the KB returns retrieval context; stores
-persist and retrieve verdict/feedback documents.
+This is intentionally different from a “chatbot-first” or “fully autonomous certification” design. The design preserves human accountability, explicit evidence chains, and separate rule evaluation from final review approval.
 
 ---
 
-## Runtime Surfaces
+## Current runtime surfaces
 
-| Surface | Entry point | Responsibility |
+| Surface | Typical entry point | Purpose |
 | --- | --- | --- |
-| CLI | `al-furqan` | Local command-line access to the core package |
-| REST API | `uvicorn al_furqan.api.app:app` | Evaluation, grounded evaluation, Criterion tests, verdict review, stats, health |
-| RaaS MCP | `python -m furqan_raas.mcp_server` | JSON-RPC/MCP wrapper for reasoning tools |
-| Memory MCP | `python -m furqan_memory.mcp_server` | Local agent memory, recall, pattern recognition, feedback |
+| CLI | `al-furqan` | Local reasoning entry point |
+| REST API | `uvicorn al_furqan.api.app:app --reload` | Evaluation and review API |
+| RaaS MCP | `python -m furqan_raas.mcp_server` | Reasoning-as-a-skill wrapper |
+| Memory MCP | `python -m furqan_memory.mcp_server` | Local recall/memory server |
 
-Main REST endpoints are mounted under `/api/v1`:
-
-| Endpoint | Purpose |
-| --- | --- |
-| `POST /evaluate` | Run the standard evaluation pipeline |
-| `POST /evaluate/grounded` | Evaluate with retrieved precedent/context |
-| `GET /evaluate/{verdict_id}` | Read evaluation result/status |
-| `POST /criterion-test` | Evaluate a named framework |
-| `GET /verdicts` | List verdicts |
-| `GET /verdicts/search` | Search verdicts |
-| `GET /verdicts/{verdict_id}` | Read one verdict |
-| `DELETE /verdicts/{verdict_id}` | Invalidate a verdict and cascade flags |
-| `POST /verdicts/{verdict_id}/review` | Approve, reject, or correct a verdict |
-| `GET /stats` | Store statistics |
-| `GET /health` | API, store, and LLM health |
+The API is organized around evaluation, review, and health endpoints under `/api/v1` in the core application. The exact routes evolve with the package, so the best source of truth is the API implementation rather than the older README tables.
 
 ---
 
-## Storage and Search
+## Knowledge and evidence model
 
-Elasticsearch is the runtime storage and retrieval backend for the core system.
-The registry in `src/al_furqan/kb/es/indices.py` defines these runtime indices:
+The project stores and retrieves Islamic-finance evidence in Elasticsearch, with the runtime knowledge model centered on:
 
-| Logical name | Default ES index | Purpose |
-| --- | --- | --- |
-| `quran` | `furqan_quran` | Quran verses, Arabic/English text, metadata, embeddings |
-| `hadith` | `furqan_hadith` | Hadith records, grading, narration metadata, embeddings |
-| `graph` | `furqan_graph` | Knowledge graph edges and provenance |
-| `lessons` | `furqan_lessons` | Enriched lesson chapters and linked evidence |
-| `verdicts` | `furqan_verdicts` | Evaluation results and precedent retrieval |
-| `feedback` | `furqan_feedback` | Human feedback and corrections |
-| `iifa_resolutions` | `furqan_iifa_resolutions` | Reviewed IIFA resolutions |
-| `fiqh_rulings` | `furqan_fiqh_rulings` | Reviewed four-school fiqh rulings |
-| `fatwa_qa` | `furqan_fatwa_qa` | Filtered financial fatwa Q&A evidence |
-| `fatwa_embeddings` | `furqan_fatwa_embeddings` | HF fatwa questions and 768-dim answer embeddings |
+- Quran and hadith corpora
+- fiqh and IIFA sources
+- financial fatwa Q&A content
+- verdicts and feedback records
+- product and review evidence metadata
 
-Training/staging indices are also defined in code:
+The repo also includes active training and data-processing artifacts under `training/`, `scripts/`, and `data-archive/` to support retrieval preparation and knowledge ingestion.
 
-| Plan key | ES index | Source JSONL |
-| --- | --- | --- |
-| `graph` | `furqan_graph_edges` | `data_archive/training/quran_graph.jsonl` |
-| `history` | `furqan_history_events` | `data_archive/training/human_history.jsonl` |
-| `testing_talk_about_history` | `furqan_testing_talk_about_history` | `data_archive/training/testing/model_testing_how_people_talk_about_history.jsonl` |
-
-The current checkout has archived raw corpora under
-`data_archive/backup_for_stored_data/`. Code-level path constants in
-`src/al_furqan/paths.py` define normalized anchors such as
-`data_archive/quran`, `data_archive/hadith`, and `data_archive/lessons`; pass
-`--data-dir` to migration commands when working from the backup snapshot.
+Notably, the repository is a research and platform codebase, not a polished SaaS product. The project remains in active engineering and product-shaping work, with the fintech review layer being the clearest current product direction.
 
 ---
 
-## Project Layout
+## Repository layout
 
 ```text
 al-furqan/
-  src/al_furqan/
-    api/                 FastAPI app, routers, schemas, orchestrator
-    auth/                API key auth, roles, rate limiting, security middleware
-    core/                Backward-compatible re-exports for the engine package
-    engine/              Axioms, gates, chains, symbolic verifier, security, Tafsir RAG
-    kb/                  ES collections, graph schema, ingestion, Tafsir KB tools
-    lessons/             Transcription, cleaning, enrichment helpers
-    providers/           LLM provider abstraction
-    review/              Human review helpers
-    store/               ES verdict and feedback stores
-    tokenizer/           Quran tokenizer and QAC-aware morphology
-  tests/                 Core package tests
-  furqan-raas/           MCP reasoning server wrapper
-  furqan-memory/         Local MCP memory server
-  data_archive/          Sources, active fiqh corpora, staging data, derived outputs
-  training/              Graph/history extraction and staging pipelines
-  scripts/               Benchmarks, evals, fetchers, KB extraction, Neo4j, rendering
-  docs/                  Active and legacy documentation
-  plan/                  PRDs, sprint plans, and roadmap documents
+  src/al_furqan/            Core runtime and reasoning engine
+  tests/                    Automated tests
+  furqan-raas/              MCP reasoning server package
+  furqan-memory/            Local memory MCP package
+  docs/                     Current and legacy architecture docs
+  plan/                     Product and technical plans
+  scripts/                  Data and retrieval tooling
+  training/                 Training and staging pipelines
+  data-archive/             Archive and sourced data materials
+  environment.yml
+  pyproject.toml
+  requirements.txt
+  docker-compose.yml
+  README.md
 ```
 
-### Data hierarchy
-
-```text
-data_archive/
-  sources/                Immutable external/source snapshots
-    fatwas/               Full Q&A CSV and full-corpus embeddings
-    huggingface/          Original Hugging Face shard archives
-  fiqh/financial_qa/     Active 7,162-row financial fatwa corpus
-  staging/huggingface/   Extracted HF shards awaiting validated import
-  derived/fiqh/           Row maps and other reproducible derived artifacts
-  backup_for_stored_data/ Existing Quran, Hadith, Tafsir, and lesson snapshots
-  training/               Generated JSONL training/staging outputs
-scripts/kb/               Data filters and KB ingestion utilities
-```
-
-The complete `islamqa_emb_0` staging shard contains 9,994 validated records.
-The supplied `islamqa_emb_1.tar.xz` source archive is truncated and is retained
-without partial extraction until a complete copy is available.
-
-The active financial fatwa corpus is indexed with:
-
-```bash
-python -m al_furqan.kb.es.setup_indices --index fatwa_qa
-python -m al_furqan.kb.es.ingest_fatwa_qa --dry-run
-python -m al_furqan.kb.es.ingest_fatwa_qa
-```
-
-Current tree snapshot from this checkout:
-
-| Area | Count |
-| --- | ---: |
-| Core Python modules under `src/al_furqan` | 110 |
-| Core test modules under `tests` | 42 |
-| RaaS test modules | 1 |
-| Memory test modules | 4 |
-| Test functions across core/RaaS/Memory | 684 |
+The exact artifact and archive layout can vary by branch or dataset snapshot; the implementation in `src/al_furqan/paths.py` and the `kb` ingestion modules should be treated as the most authoritative source when filesystem paths differ.
 
 ---
 
-## Quick Start
+## Quick start
+
+Install the package in editable mode:
 
 ```bash
 pip install -e ".[dev]"
-pytest -m "not slow"
-ruff check src/ tests/
-al-furqan
 ```
 
-### Conda package
+Run the test suite (excluding slower tests when needed):
 
-Create the development environment with:
+```bash
+pytest -m "not slow"
+```
+
+Run the API locally:
+
+```bash
+uvicorn al_furqan.api.app:app --reload
+```
+
+Start the supporting services used by the project:
+
+```bash
+docker compose up elasticsearch redis
+```
+
+For the local development environment:
 
 ```bash
 conda env update --file environment.yml --name al-furqan
 conda activate al-furqan
 ```
 
-Build the local Conda package with `conda-build`:
+---
 
-```bash
-conda install -c conda-forge conda-build
-conda build conda.recipe
-```
+## Product principles
 
-The GitHub Actions workflow builds the package on pushes and pull requests
-and stores the resulting artifact. Publishing to Anaconda should be added as a
-separate release job using an `ANACONDA_API_TOKEN` repository secret.
+1. Grounded review first
+   - every finding should point to evidence, source context, and reviewable reasoning.
 
-Run the API:
+2. Human governance remains central
+   - the system may assist, structure, and highlight issues, but final Shariah compliance judgment remains human-governed.
 
-```bash
-uvicorn al_furqan.api.app:app --reload
-```
+3. Transparent evidence over opaque scoring
+   - compliance findings should be explainable, traceable, and reviewable.
 
-Run Elasticsearch and supporting services:
+4. Rule logic is distinct from certification
+   - a product may be logically consistent while still failing a Shariah rule or requiring a qualified reviewer decision.
 
-```bash
-docker compose up elasticsearch redis
-```
+5. Open-source reuse and extension
+   - the project is designed to be usable as a reasoning foundation rather than a closed, single-purpose tool.
 
-Create and inspect runtime ES indices:
+---
 
-```bash
-python -m al_furqan.kb.es.setup_indices --test
-python -m al_furqan.kb.es.setup_indices --status
-```
+## Documentation and next steps
 
-Migrate static data into ES, pointing to the current backup snapshot if needed:
+The code and docs in this repo are the starting point for a broader fintech compliance review workflow. The current strategy is best understood as:
 
-```bash
-python -m al_furqan.kb.es.migrate_data --data-dir data_archive/backup_for_stored_data --verify
-```
+- generic source-grounded reasoning engine,
+- fintech review abstractions and rule layer,
+- evidence-based Shariah compliance review assistance,
+- human review governance and auditability.
 
-Index training JSONL outputs:
+For deeper architecture context, see:
 
-```bash
-python -m training.pipeline.staging.index_training_data --dry-run
-python -m training.pipeline.staging.index_training_data --only graph
-```
+- `docs/README.md`
+- `docs/adr/ADR-001-fintech-contract-review-and-iifa-source-of-truth.md`
+- `docs/active_docs/AL-FURQAN-ARCHITECTURE-v3.0.md`
+
+This README reflects the current product direction of the codebase and intentionally avoids presenting the project as a finished autonomous certification system.
 
 Operational note: `docker-compose.yml` includes an `es-seed` service, but the
 current `Dockerfile.es-seed` still references a legacy `data/` directory and a

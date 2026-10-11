@@ -1,8 +1,10 @@
 # Furqan Memory
 
-Client-side memory and learning MCP server for Al-Furqan-compatible agents.
-It stores verdict-shaped records locally, recalls related past judgments, learns
-patterns, and records feedback without sending data to a network service.
+Client-side memory and learning MCP server for the Sanad platform and its
+Al-Furqan-compatible agents. It stores verdict-shaped records locally, recalls
+related past judgments, learns patterns, and records feedback without sending
+data to a network service. This is the local memory layer for the broader Sanad
+Shariah-compliance review platform rather than a standalone product.
 
 This package is deliberately separate from the core engine:
 
@@ -15,9 +17,10 @@ MCP client
   -> ChromaDB vector collections
 ```
 
-The core Al-Furqan runtime uses Elasticsearch for verdict and feedback storage.
-`furqan-memory/` is different by design: it is a local agent memory cache that
-stays on the user's device.
+The core Al-Furqan runtime uses Elasticsearch for verdict and feedback storage,
+while Sanad uses the engine plus product review workflows above it. `furqan-memory/`
+is different by design: it is a local agent memory cache that stays on the user's
+device.
 
 ---
 
